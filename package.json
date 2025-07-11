@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "@farcaster/frame-sdk": "latest",
+    "@farcaster/miniapp-sdk": "latest",
     "@hookform/resolvers": "^3.9.1",
+    "@neondatabase/serverless": "latest",
+    "@neynar/nodejs-sdk": "latest",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-aspect-ratio": "latest",
