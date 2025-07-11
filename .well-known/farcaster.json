@@ -1,0 +1,29 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjEyMzQ1LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4MTIzNDU2Nzg5MGFiY2RlZiJ9",
+    "payload": "eyJkb21haW4iOiJmb2xsb3ctZm9yLWNvaW5zLmNvbSJ9",
+    "signature": "MHgxMjM0NTY3ODkwYWJjZGVmZ2hpams="
+  },
+  "frame": {
+    "version": "1",
+    "name": "Follow for Coins",
+    "iconUrl": "/icon.png",
+    "homeUrl": "/",
+    "imageUrl": "/api/og",
+    "buttonTitle": "🪙 Start Now",
+    "splashImageUrl": "/icon.png",
+    "splashBackgroundColor": "#3b82f6",
+    "webhookUrl": "/api/webhook",
+    "description": "Follow users, earn coins, order followers! A Farcaster Mini App for earning coins and increasing followers",
+    "subtitle": "Earn coins by following",
+    "primaryCategory": "social",
+    "tags": ["follow", "coins", "social", "farcaster", "english"],
+    "requiredCapabilities": [
+      "actions.ready",
+      "actions.composeCast",
+      "actions.addMiniApp",
+      "haptics.impactOccurred",
+      "haptics.notificationOccurred"
+    ]
+  }
+}
