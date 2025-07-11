@@ -8,11 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { Coins, Users, Trophy, Gift, Bell, Moon, Sun, AlertCircle } from "lucide-react"
+import { Coins, Users, Gift, Bell, Moon, Sun, AlertCircle } from "lucide-react"
 
 interface User {
   fid: number
@@ -43,7 +42,6 @@ export default function FarcasterFollowApp() {
   const [profileUrl, setProfileUrl] = useState("")
   const [followerQuantity, setFollowerQuantity] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
-  const [leaderboard, setLeaderboard] = useState<Array<{ fid: number; username: string; score: number }>>([])
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -54,7 +52,6 @@ export default function FarcasterFollowApp() {
         // Load user data
         await loadUserData()
         await loadSuggestedUsers()
-        await loadLeaderboard()
 
         // Mark app as ready
         await sdk.actions.ready()
@@ -84,57 +81,9 @@ export default function FarcasterFollowApp() {
   }
 
   const loadSuggestedUsers = async () => {
-    // Mock suggested users data - sometimes empty to show empty state
-    const shouldShowEmpty = Math.random() < 0.3 // 30% chance of empty state
-
-    if (shouldShowEmpty) {
-      setSuggestedUsers([])
-      return
-    }
-
-    const mockUsers: User[] = [
-      {
-        fid: 3621,
-        username: "alice",
-        displayName: "Alice Johnson",
-        pfpUrl: "/placeholder.svg?height=40&width=40",
-        followed: false,
-      },
-      {
-        fid: 1234,
-        username: "bob",
-        displayName: "Bob Smith",
-        pfpUrl: "/placeholder.svg?height=40&width=40",
-        followed: false,
-      },
-      {
-        fid: 5678,
-        username: "charlie",
-        displayName: "Charlie Brown",
-        pfpUrl: "/placeholder.svg?height=40&width=40",
-        followed: false,
-      },
-      {
-        fid: 9012,
-        username: "diana",
-        displayName: "Diana Prince",
-        pfpUrl: "/placeholder.svg?height=40&width=40",
-        followed: false,
-      },
-    ]
-    setSuggestedUsers(mockUsers)
-  }
-
-  const loadLeaderboard = async () => {
-    // Mock leaderboard data
-    const mockLeaderboard = [
-      { fid: 1111, username: "topuser1", score: 150 },
-      { fid: 2222, username: "topuser2", score: 120 },
-      { fid: 3333, username: "topuser3", score: 95 },
-      { fid: 4444, username: "topuser4", score: 80 },
-      { fid: 5555, username: "topuser5", score: 65 },
-    ]
-    setLeaderboard(mockLeaderboard)
+    // Remove mock data - in a real app, this would fetch from your backend
+    // For now, we'll show empty state to demonstrate the functionality
+    setSuggestedUsers([])
   }
 
   const handleFollowUser = async (user: User) => {
@@ -218,12 +167,23 @@ export default function FarcasterFollowApp() {
 
     setIsLoading(true)
     try {
-      // In a real app, you would:
-      // 1. Validate the profile URL
-      // 2. Add the user to the follow queue
-      // 3. Deduct coins
-      // 4. Process the follower order
+      // Extract username from profile URL
+      const urlMatch = profileUrl.match(/farcaster\.xyz\/([^/?]+)/)
+      const username = urlMatch ? urlMatch[1] : `user_${Date.now()}`
 
+      // Create new user object from the order
+      const newUser: User = {
+        fid: Math.floor(Math.random() * 100000), // Generate random FID for demo
+        username: username,
+        displayName: username.charAt(0).toUpperCase() + username.slice(1),
+        pfpUrl: "/placeholder.svg?height=40&width=40",
+        followed: false,
+      }
+
+      // Add the user to suggested users list
+      setSuggestedUsers((prev) => [newUser, ...prev])
+
+      // Update user stats
       setUserStats((prev) => ({
         ...prev,
         coins: prev.coins - totalCost,
@@ -235,7 +195,7 @@ export default function FarcasterFollowApp() {
 
       toast({
         title: "Order Successful!",
-        description: `Successfully ordered ${followerQuantity} follower${followerQuantity > 1 ? "s" : ""} for ${totalCost} coins!`,
+        description: `Successfully ordered ${followerQuantity} follower${followerQuantity > 1 ? "s" : ""} for ${totalCost} coins! Your profile has been added to the follow list.`,
       })
     } catch (error) {
       console.error("Failed to order followers:", error)
@@ -354,10 +314,9 @@ export default function FarcasterFollowApp() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="follow" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="follow">Follow Users</TabsTrigger>
             <TabsTrigger value="order">Order Followers</TabsTrigger>
-            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
           </TabsList>
 
           {/* Follow Tab */}
@@ -373,7 +332,7 @@ export default function FarcasterFollowApp() {
                     <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Users Available</h3>
                     <p className="text-gray-500 dark:text-gray-400 mb-4">
-                      There are no suggested users to follow right now. Check back later!
+                      There are no suggested users to follow right now. Order followers to add users to this list!
                     </p>
                     <Button onClick={loadSuggestedUsers} variant="outline">
                       Refresh List
@@ -452,35 +411,6 @@ export default function FarcasterFollowApp() {
                     ? `Insufficient Coins (Need: ${followerQuantity * 2})`
                     : `Order ${followerQuantity} Follower${followerQuantity > 1 ? "s" : ""} (-${followerQuantity * 2}🪙)`}
                 </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Leaderboard Tab */}
-          <TabsContent value="leaderboard" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5" />
-                  Top Users
-                </CardTitle>
-                <CardDescription>Users with the highest scores</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {leaderboard.map((user, index) => (
-                    <div key={user.fid} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Badge variant={index < 3 ? "default" : "secondary"}>#{index + 1}</Badge>
-                        <span className="font-medium">@{user.username}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="font-bold">{user.score}</span>
-                        <Coins className="h-4 w-4 text-yellow-500" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
