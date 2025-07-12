@@ -1,37 +1,43 @@
 import { NextResponse } from "next/server";
-import { NeynarAPIClient } from "@neynar/nodejs-sdk";
+import { NeynarAPIClient, Configuration } from "@neynar/nodejs-sdk";
 
-const neynarClient = new NeynarAPIClient(process.env.NEYNAR_API_KEY!);
+const config = new Configuration({
+  apiKey: process.env.NEYNAR_API_KEY,
+  baseOptions: {
+    headers: {
+      "x-neynar-experimental": true,
+    },
+  },
+});
+const neynarClient = new NeynarAPIClient(config);
 
 export async function GET(request: Request) {
   try {
-    const authorization = request.headers.get("Authorization");
-    if (!authorization || !authorization.startsWith("Bearer ")) {
+    const url = new URL(request.url);
+    const fid = url.searchParams.get("fid");
+    if (!fid) {
       return NextResponse.json(
-        { success: false, message: "Missing token" },
-        { status: 401 }
+        { success: false, message: "Missing user FID." },
+        { status: 400 }
       );
     }
 
-    const token = authorization.split(" ")[1];
-    // فرض می‌کنیم توکن از Sign in with Farcaster دریافت شده
-    const userResponse = await neynarClient.verifySignInMessage(token);
-    if (!userResponse.is_verified) {
+    const userResponse = await neynarClient.lookupUserById(Number(fid));
+    if (!userResponse?.user) {
       return NextResponse.json(
-        { success: false, message: "احراز هویت ناموفق بود." },
-        { status: 401 }
+        { success: false, message: "Farcaster user not found." },
+        { status: 404 }
       );
     }
 
-    const fid = userResponse.fid;
-    const userData = await neynarClient.lookupUserByFid(fid);
+    const user = {
+      fid: userResponse.user.fid,
+      username: userResponse.user.username,
+      displayName: userResponse.user.display_name,
+      pfpUrl: userResponse.user.pfp?.url || "/placeholder.svg",
+    };
 
-    return NextResponse.json({
-      success: true,
-      fid: fid,
-      username: userData.user.username,
-      signerUuid: userResponse.signer_uuid, // فرضی
-    });
+    return NextResponse.json({ success: true, user });
   } catch (error) {
     console.error("Error in GET /api/me:", error);
     return NextResponse.json(
