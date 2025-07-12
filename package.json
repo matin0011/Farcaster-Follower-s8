@@ -10,8 +10,9 @@
   },
   "dependencies": {
     "@farcaster/frame-sdk": "latest",
+    "@farcaster/miniapp-sdk": "^0.1.6",
     "@hookform/resolvers": "^3.9.1",
-    "@neynar/nodejs-sdk": "^3.24.0",
+    "@neynar/nodejs-sdk": "^3.25.0",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-aspect-ratio": "latest",

@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { NeynarAPIClient } from "@neynar/nodejs-sdk";
+import { NeynarAPIClient, Configuration } from "@neynar/nodejs-sdk";
 
-const neynarClient = new NeynarAPIClient(process.env.NEYNAR_API_KEY!);
+const config = new Configuration({
+  apiKey: process.env.NEYNAR_API_KEY,
+  baseOptions: {
+    headers: {
+      "x-neynar-experimental": true,
+    },
+  },
+});
+const neynarClient = new NeynarAPIClient(config);
 
 const OrderSchema = new mongoose.Schema({
   warpcastLink: String,
@@ -39,7 +47,7 @@ export async function POST(request: Request) {
     }
 
     const userResponse = await neynarClient.lookupUserByUsername(username);
-    if (!userResponse || !userResponse.user) {
+    if (!userResponse?.user) {
       return NextResponse.json(
         { success: false, message: "Farcaster user not found." },
         { status: 400 }

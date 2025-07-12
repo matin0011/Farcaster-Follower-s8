@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { NeynarAPIClient } from "@neynar/nodejs-sdk";
+import { NeynarAPIClient, Configuration } from "@neynar/nodejs-sdk";
 
-const neynarClient = new NeynarAPIClient(process.env.NEYNAR_API_KEY!);
+const config = new Configuration({
+  apiKey: process.env.NEYNAR_API_KEY,
+  baseOptions: {
+    headers: {
+      "x-neynar-experimental": true,
+    },
+  },
+});
+const neynarClient = new NeynarAPIClient(config);
 
 const FollowerSchema = new mongoose.Schema({
   orderId: mongoose.Schema.Types.ObjectId,
@@ -47,7 +55,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const followResponse = await neynarClient.followUser(signerUuid, order.userFid);
+    const followResponse = await neynarClient.followUser(signerUuid, [order.userFid]);
     if (!followResponse.success) {
       return NextResponse.json(
         { success: false, message: "Follow failed." },
