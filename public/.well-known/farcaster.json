@@ -13,6 +13,7 @@
     "buttonTitle": "🪙 Start Now",
     "splashImageUrl": "https://v0-farcaster-mini-app-chi.vercel.app/icon.png",
     "splashBackgroundColor": "#3b82f6",
+    "webhookUrl": "/api/webhook",
     "description": "Follow users, earn coins, order followers! A Farcaster Mini App for earning coins and increasing followers",
     "subtitle": "Earn coins by following",
     "primaryCategory": "social",

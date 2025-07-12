@@ -11,6 +11,7 @@
   "dependencies": {
     "@farcaster/frame-sdk": "latest",
     "@hookform/resolvers": "^3.9.1",
+    "@neynar/nodejs-sdk": "^3.24.0",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-aspect-ratio": "latest",
@@ -46,7 +47,9 @@
     "embla-carousel-react": "latest",
     "input-otp": "latest",
     "lucide-react": "^0.454.0",
-    "next": "14.2.16",
+    "mongodb": "^6.17.0",
+    "mongoose": "^8.16.3",
+    "next": "^14.2.30",
     "next-themes": "latest",
     "react": "^18",
     "react-day-picker": "latest",

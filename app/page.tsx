@@ -28,6 +28,15 @@ interface UserStats {
   referrals: number
 }
 
+interface Order {
+  _id: string
+  warpcastLink: string
+  userFid: number
+  username: string
+  pfpUrl: string
+  requiredFollows: number
+}
+
 export default function FarcasterFollowApp() {
   const { theme, setTheme } = useTheme()
   const { toast } = useToast()
@@ -39,6 +48,7 @@ export default function FarcasterFollowApp() {
     referrals: 0,
   })
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
   const [profileUrl, setProfileUrl] = useState("")
   const [followerQuantity, setFollowerQuantity] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
@@ -49,7 +59,7 @@ export default function FarcasterFollowApp() {
         // Initialize SDK and get context
         setContext(sdk.context)
 
-        // Load user data
+        // Load user data and orders
         await loadUserData()
         await loadSuggestedUsers()
 
@@ -69,48 +79,84 @@ export default function FarcasterFollowApp() {
   }, [])
 
   const loadUserData = async () => {
-    // In a real app, this would fetch from your backend
-    // For demo purposes, we'll use mock data
-    const mockStats = {
-      coins: 15,
-      followsGiven: 8,
-      followersReceived: 12,
-      referrals: 3,
+    try {
+      const response = await fetch(`/api/user-stats?fid=${sdk.context.user.fid}`)
+      const data = await response.json()
+      if (data.success) {
+        setUserStats(data.stats)
+      } else {
+        throw new Error(data.message || "Failed to load user stats")
+      }
+    } catch (error) {
+      console.error("Failed to load user data:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load user stats.",
+        variant: "destructive",
+      })
     }
-    setUserStats(mockStats)
   }
 
   const loadSuggestedUsers = async () => {
-    // Remove mock data - in a real app, this would fetch from your backend
-    // For now, we'll show empty state to demonstrate the functionality
-    setSuggestedUsers([])
+    try {
+      const response = await fetch("/api/order")
+      const data = await response.json()
+      if (data.success) {
+        const users = data.orders.map((order: Order) => ({
+          fid: order.userFid,
+          username: order.username,
+          displayName: order.username.charAt(0).toUpperCase() + order.username.slice(1),
+          pfpUrl: order.pfpUrl || "/placeholder.svg",
+          followed: false,
+        }))
+        setSuggestedUsers(users)
+        setOrders(data.orders)
+      }
+    } catch (error) {
+      console.error("Failed to load suggested users:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load suggested users.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleFollowUser = async (user: User) => {
     setIsLoading(true)
     try {
-      // Trigger haptic feedback
       if (await sdk.getCapabilities().then((caps) => caps.includes("haptics.impactOccurred"))) {
         await sdk.haptics.impactOccurred("light")
       }
 
-      // Simulate follow operation with chance of failure
-      const followSuccess = Math.random() > 0.2 // 80% success rate
+      const order = orders.find((o) => o.userFid === user.fid)
+      if (!order) {
+        throw new Error("No matching order found")
+      }
 
-      if (!followSuccess) {
-        throw new Error("Follow operation failed")
+      const response = await fetch("/api/follow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: order._id,
+          signerUuid: context.user.signerUuid,
+          followedByFid: context.user.fid,
+          followedByUsername: context.user.username,
+        }),
+      })
+      const data = await response.json()
+
+      if (!data.success) {
+        throw new Error(data.message || "Follow failed")
       }
 
       // Update local state
       setSuggestedUsers((prev) => prev.map((u) => (u.fid === user.fid ? { ...u, followed: true } : u)))
+      setOrders((prev) => prev.map((o) => (o._id === order._id ? { ...o, requiredFollows: data.remainingFollows } : o)))
 
-      setUserStats((prev) => ({
-        ...prev,
-        coins: prev.coins + 1,
-        followsGiven: prev.followsGiven + 1,
-      }))
+      // Refresh user stats
+      await loadUserData()
 
-      // Show success notification
       toast({
         title: "Follow Successful!",
         description: `You followed @${user.username} and earned 1 coin!`,
@@ -123,7 +169,7 @@ export default function FarcasterFollowApp() {
       console.error("Failed to follow user:", error)
       toast({
         title: "Follow Failed",
-        description: `Failed to follow @${user.username}. Please try again.`,
+        description: `Failed to follow @${user.username}. ${error.message}`,
         variant: "destructive",
       })
 
@@ -167,41 +213,55 @@ export default function FarcasterFollowApp() {
 
     setIsLoading(true)
     try {
-      // Extract username from profile URL
-      const urlMatch = profileUrl.match(/farcaster\.xyz\/([^/?]+)/)
-      const username = urlMatch ? urlMatch[1] : `user_${Date.now()}`
+      const response = await fetch("/api/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ warpcastLink: profileUrl, requiredFollows: followerQuantity, fid: context.user.fid }),
+      })
+      const data = await response.json()
 
-      // Create new user object from the order
-      const newUser: User = {
-        fid: Math.floor(Math.random() * 100000), // Generate random FID for demo
-        username: username,
-        displayName: username.charAt(0).toUpperCase() + username.slice(1),
-        pfpUrl: "/placeholder.svg?height=40&width=40",
-        followed: false,
+      if (!data.success) {
+        throw new Error(data.message || "Failed to order followers")
       }
 
-      // Add the user to suggested users list
-      setSuggestedUsers((prev) => [newUser, ...prev])
+      setOrders((prev) => [data.order, ...prev])
+      setSuggestedUsers((prev) => [
+        {
+          fid: data.order.userFid,
+          username: data.order.username,
+          displayName: data.order.username.charAt(0).toUpperCase() + data.order.username.slice(1),
+          pfpUrl: data.order.pfpUrl || "/placeholder.svg",
+          followed: false,
+        },
+        ...prev,
+      ])
 
       // Update user stats
-      setUserStats((prev) => ({
-        ...prev,
-        coins: prev.coins - totalCost,
-        followersReceived: prev.followersReceived + followerQuantity,
-      }))
+      const statsResponse = await fetch("/api/user-stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fid: context.user.fid,
+          coins: userStats.coins - totalCost,
+        }),
+      })
+      const statsData = await statsResponse.json()
+      if (statsData.success) {
+        setUserStats(statsData.stats)
+      }
 
       setProfileUrl("")
       setFollowerQuantity(1)
 
       toast({
         title: "Order Successful!",
-        description: `Successfully ordered ${followerQuantity} follower${followerQuantity > 1 ? "s" : ""} for ${totalCost} coins! Your profile has been added to the follow list.`,
+        description: `Successfully ordered ${followerQuantity} follower${followerQuantity > 1 ? "s" : ""} for ${totalCost} coins!`,
       })
     } catch (error) {
       console.error("Failed to order followers:", error)
       toast({
         title: "Order Failed",
-        description: "Failed to process your order. Please try again.",
+        description: error.message || "Failed to process your order.",
         variant: "destructive",
       })
     } finally {
@@ -217,6 +277,21 @@ export default function FarcasterFollowApp() {
         text: `🪙 Join me on Follow for Coins! Earn coins by following users and get followers for your profile!\n\nUse my referral link to get 5 bonus coins: ${referralLink}`,
         embeds: [referralLink],
       })
+
+      // Update referrals and coins
+      const response = await fetch("/api/referrals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fid: context.user.fid }),
+      })
+      const data = await response.json()
+      if (data.success) {
+        setUserStats(data.stats)
+        toast({
+          title: "Referral Shared!",
+          description: "Referral link shared successfully. You earned 5 coins!",
+        })
+      }
     } catch (error) {
       console.error("Failed to share referral:", error)
       toast({
@@ -360,6 +435,17 @@ export default function FarcasterFollowApp() {
                       </Button>
                     </div>
                   ))
+                )}
+                {orders.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-lg font-medium mb-2">Ordered Followers</h3>
+                    {orders.map((order) => (
+                      <div key={order._id} className="mb-4">
+                        <p className="font-medium">@{order.username} (Remaining: {order.requiredFollows})</p>
+                        <FollowersList orderId={order._id} />
+                      </div>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>
