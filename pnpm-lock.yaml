@@ -11,11 +11,14 @@ importers:
       '@farcaster/frame-sdk':
         specifier: latest
         version: 0.1.6(bufferutil@4.0.9)(typescript@5.0.2)(utf-8-validate@5.0.10)(zod@3.24.1)
+      '@farcaster/miniapp-sdk':
+        specifier: ^0.1.6
+        version: 0.1.6(bufferutil@4.0.9)(typescript@5.0.2)(utf-8-validate@5.0.10)(zod@3.24.1)
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.9.1(react-hook-form@7.60.0(react@18.0.0))
       '@neynar/nodejs-sdk':
-        specifier: ^3.24.0
+        specifier: ^3.25.0
         version: 3.25.0(bufferutil@4.0.9)(typescript@5.0.2)(utf-8-validate@5.0.10)(zod@3.24.1)
       '@radix-ui/react-accordion':
         specifier: latest
