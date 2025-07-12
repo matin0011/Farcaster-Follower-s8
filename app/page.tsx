@@ -79,6 +79,7 @@ export default function FarcasterFollowApp() {
         }
 
         let currentUser: FarcasterContext["user"] | null = null
+        let isDemoUser = false // Flag to track if it's a demo user
 
         if (sdkContext?.user) {
           try {
@@ -99,6 +100,7 @@ export default function FarcasterFollowApp() {
                 displayName: "Demo User",
                 pfpUrl: "/placeholder.svg",
               }
+              isDemoUser = true
             } else {
               currentUser = {
                 fid: userFid,
@@ -115,6 +117,7 @@ export default function FarcasterFollowApp() {
               displayName: "Demo User",
               pfpUrl: "/placeholder.svg",
             }
+            isDemoUser = true
           }
         } else {
           // Demo context if no SDK user is available
@@ -124,6 +127,7 @@ export default function FarcasterFollowApp() {
             displayName: "Demo User",
             pfpUrl: "/placeholder.svg",
           }
+          isDemoUser = true
         }
 
         setContext({ user: currentUser })
@@ -158,7 +162,7 @@ export default function FarcasterFollowApp() {
                   variant: "destructive",
                 })
                 // Fallback to default stats if DB init fails
-                setUserStats({ coins: 15, follows_given: 0, followers_received: 0, referrals: 0 })
+                setUserStats({ coins: 10, follows_given: 0, followers_received: 0, referrals: 0 })
               }
             })
             .catch((err) => {
@@ -169,11 +173,11 @@ export default function FarcasterFollowApp() {
                 variant: "destructive",
               })
               // Fallback to default stats if API call fails
-              setUserStats({ coins: 15, follows_given: 0, followers_received: 0, referrals: 0 })
+              setUserStats({ coins: 10, follows_given: 0, followers_received: 0, referrals: 0 })
             })
         } else {
           // If no valid FID even after fallbacks, use default demo stats
-          setUserStats({ coins: 15, follows_given: 0, followers_received: 0, referrals: 0 })
+          setUserStats({ coins: 10, follows_given: 0, followers_received: 0, referrals: 0 })
           toast({
             title: "Demo Mode",
             description: "Running in demo mode. Connect your Farcaster account for full features.",
@@ -197,7 +201,7 @@ export default function FarcasterFollowApp() {
             pfpUrl: "/placeholder.svg",
           },
         })
-        setUserStats({ coins: 15, follows_given: 0, followers_received: 0, referrals: 0 })
+        setUserStats({ coins: 10, follows_given: 0, followers_received: 0, referrals: 0 })
         setIsInitialized(true)
         toast({
           title: "Initialization Error",
@@ -465,7 +469,7 @@ export default function FarcasterFollowApp() {
 
   const handleInviteFriend = async () => {
     try {
-      const referralLink = `https://farcaster.xyz/miniapps/follow-app?ref=${context?.user?.fid || "demo"}`
+      const referralLink = `${window.location.origin}?ref=${context?.user?.fid}`
 
       // Try to use SDK for sharing
       try {

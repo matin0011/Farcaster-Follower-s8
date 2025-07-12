@@ -1,8 +1,5 @@
 import { neon } from "@neondatabase/serverless"
 
-// Recommended for Next.js App Router to prevent too many connections
-// Remove the deprecated line
-
 const sql = neon(process.env.DATABASE_URL!)
 
 interface User {
@@ -63,8 +60,8 @@ export async function createUser(fid: number, username: string, displayName: str
 export async function getUserStats(fid: number): Promise<UserStats> {
   try {
     const [stats] = await sql<UserStats[]>`
-      INSERT INTO user_stats (fid)
-      VALUES (${fid})
+      INSERT INTO user_stats (fid, coins) -- Explicitly set coins
+      VALUES (${fid}, 10) -- Set initial coins to 10
       ON CONFLICT (fid) DO NOTHING
       RETURNING fid, coins, follows_given, followers_received, referrals;
     `
