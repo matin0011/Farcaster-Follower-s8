@@ -4,7 +4,8 @@ import { isApiErrorResponse } from "@neynar/nodejs-sdk"
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY!
 const NEYNAR_SIGNER_UUID = process.env.NEYNAR_SIGNER_UUID!
 
-const neynarClient = new NeynarAPIClient(NEYNAR_API_KEY)
+// FIX: Pass API key as an object to the constructor
+const neynarClient = new NeynarAPIClient({ apiKey: NEYNAR_API_KEY })
 
 export interface FarcasterProfile {
   fid: number
